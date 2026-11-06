@@ -127,6 +127,7 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:8px 0 20px}
 <script>
 const $ = id => document.getElementById(id);
 let DATA = null, EVENTS = [];
+const IS_TEST = /\.github\.io$/.test(location.hostname) && location.pathname.split("/").filter(Boolean).some(x=>!/\.html$/.test(x));
 
 function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1600); }
 
@@ -134,9 +135,9 @@ async function load(){
   try{
     const r = await fetch("times.json?t=" + Date.now(), { cache: "no-store" });
     DATA = await r.json();
-    try{ localStorage.setItem("times", JSON.stringify(DATA)); }catch(e){}
+    try{ localStorage.setItem("times:"+location.pathname, JSON.stringify(DATA)); }catch(e){}
   }catch(e){
-    try{ DATA = JSON.parse(localStorage.getItem("times")); }catch(_){}
+    try{ DATA = JSON.parse(localStorage.getItem("times:"+location.pathname)); }catch(_){}
   }
   if(!DATA){ $("next").innerHTML = '<div class="lbl">Offline</div><div class="when">Could not load prayer times.</div>'; return; }
   DATA.days.sort((a,b)=>a.date.localeCompare(b.date));
@@ -182,7 +183,7 @@ let showPast = false;
 function render(){
   const now = new Date(), today = isoDate(now);
   const nextEv = EVENTS.find(e=>e.at>now);
-  $("subtitle").textContent = DATA.title ? `Prayer times · ${DATA.title}` : "Prayer times · Chadwell Heath";
+  $("subtitle").textContent = (IS_TEST ? "TEST VERSION · " : "") + (DATA.title ? `Prayer times · ${DATA.title}` : "Prayer times · Chadwell Heath");
   if(DATA.notice){ $("notice").hidden=false; $("notice").textContent = DATA.notice; } else $("notice").hidden = true;
 
   const groups = weekends(DATA.days);
